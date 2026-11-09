@@ -1,0 +1,19 @@
+# Environnement virtuel
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Modèles entraînés (recréés avec train_spam_models.py)
+models/
+
+# Cache HuggingFace / divers
+.cache/
+.DS_Store
+.idea/
+.vscode/
+
+# Fichier vide pour l'instant
+app.py

@@ -1,0 +1,6 @@
+text,true_label,predicted_label,correct
+No need to buy lunch for me.. I eat maggi mee..,ham,ham,True
+Ok im not sure what time i finish tomorrow but i wanna spend the evening with you cos that would be vewy vewy lubly! Love me xxx,ham,ham,True
+Waiting in e car 4 my mum lor. U leh? Reach home already?,ham,ham,True
+Alright i have a new goal now,ham,spam,False
+Dear Voucher Holder 2 claim your 1st class airport lounge passes when using Your holiday voucher call 08704439680. When booking quote 1st class x 2,spam,ham,False

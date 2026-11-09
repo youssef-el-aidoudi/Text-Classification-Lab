@@ -1,0 +1,5 @@
+experience,batch_size,epochs,learning_rate,dropout,weighted_loss,accuracy,precision,recall,f1_score
+MLP_base,64,3,0.001,False,False,0.825,0.8524945770065075,0.786,0.81789802289282
+MLP_hyperparametres_adaptes,32,4,0.0005,False,False,0.846,0.8530612244897959,0.836,0.8444444444444444
+MLP_avec_dropout,32,4,0.0005,True,False,0.829,0.8391752577319588,0.814,0.8263959390862944
+MLP_loss_ponderee,32,4,0.0005,True,True,0.839,0.8466257668711656,0.828,0.8372093023255814
