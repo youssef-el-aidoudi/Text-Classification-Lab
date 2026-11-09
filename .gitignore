@@ -6,8 +6,10 @@ venv/
 __pycache__/
 *.pyc
 
-# Modèles entraînés (recréés avec train_spam_models.py)
-models/
+# Modèles entraînés (recréés avec train_spam_models.py).
+# La barre de début limite la règle à la racine : docs/model/ reste suivi,
+# car la démo web en a besoin.
+/models/
 
 # Cache HuggingFace / divers
 .cache/

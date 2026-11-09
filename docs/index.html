@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Text-Classification-Lab · Détection de spam et analyse de sentiment</title>
+  <meta name="description" content="Un classificateur de SMS entraîné en Python qui tourne dans le navigateur, et la comparaison complète de cinq modèles sur deux jeux de données.">
+  <meta property="og:title" content="Text-Classification-Lab">
+  <meta property="og:description" content="Écris un SMS, le modèle dit s'il le prend pour un spam et montre quels mots l'ont décidé.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%231d4ed8%27/%3E%3Cpath d=%27M8 17l5 5 11-12%27 fill=%27none%27 stroke=%27white%27 stroke-width=%273.5%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+  <link rel="preload" href="fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/hanken.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    /* Thème appliqué avant le premier rendu, pour éviter un flash blanc */
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem("theme"); } catch (e) {}
+      if (!t) t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+</head>
+<body>
+
+<a class="skip" href="#main">Aller au contenu</a>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top">Text-Classification-Lab</a>
+    <nav class="nav-links" aria-label="Sections de la page">
+      <a href="#demo">Démo</a>
+      <a href="#methode">Méthode</a>
+      <a href="#spam">Spam</a>
+      <a href="#imdb">Avis de films</a>
+      <a href="#limites">Limites</a>
+    </nav>
+    <a class="gh-link" href="https://github.com/youssef-el-aidoudi/Text-Classification-Lab">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+      <span>Code</span>
+    </a>
+    <button class="icon-btn" id="themeToggle" type="button" aria-label="Passer en thème sombre">
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+  <!-- ======================= Hero + démo ======================= -->
+  <section class="hero" id="top">
+    <div class="wrap hero-grid">
+      <div class="hero-text">
+        <h1><span>Un texte entre.</span> <span>Un verdict sort.</span></h1>
+        <p class="hero-lead">Un modèle entraîné en Python sur 4&nbsp;457 SMS tourne ici, dans ton navigateur. Écris un message&nbsp;: il te dit s'il le prend pour un spam, et surtout pourquoi.</p>
+        </div>
+
+        <dl class="facts">
+          <div><dt>Messages d'entraînement</dt><dd>4&nbsp;457</dd></div>
+          <div><dt>Bonnes réponses sur le test</dt><dd>97,7&nbsp;%</dd></div>
+          <div><dt>Mots dans le vocabulaire</dt><dd>5&nbsp;000</dd></div>
+        </dl>
+
+      <div class="demo" id="demo">
+        <div class="demo-head">
+          <h2>Teste le modèle</h2>
+          <span class="chip-model" id="demoStatus">chargement…</span>
+        </div>
+
+        <label class="visually-hidden" for="demoInput">Texte du SMS à analyser</label>
+        <textarea id="demoInput" class="demo-input" rows="3" spellcheck="false"
+          placeholder="Écris un SMS en anglais, ou choisis un exemple ci-dessous."></textarea>
+
+        <div class="chips" id="demoChips" role="group" aria-label="Exemples de messages"></div>
+
+        <div class="verdict" id="demoVerdict" aria-live="polite"></div>
+
+        <div class="why" id="demoWhy"></div>
+
+        <p class="demo-foot">Le calcul est refait en JavaScript à partir des poids du modèle entraîné en Python. Sur les 1&nbsp;115 SMS de test, le navigateur et scikit-learn rendent le même verdict dans 100&nbsp;% des cas.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= Méthode ======================= -->
+  <section class="section" id="methode">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Du texte brut au verdict</h2>
+        <p>Les deux parties du projet suivent le même chemin. Seuls le texte et le modèle changent.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <h3>Un texte</h3>
+          <p>Un SMS ou une critique de film, tels que les gens les écrivent.</p>
+        </li>
+        <li>
+          <h3>Des chiffres</h3>
+          <p>TF-IDF donne un poids à chaque mot&nbsp;: élevé s'il est fréquent ici et rare ailleurs.</p>
+        </li>
+        <li>
+          <h3>Un modèle</h3>
+          <p>Il apprend sur des exemples déjà étiquetés, puis sépare les deux classes.</p>
+        </li>
+        <li>
+          <h3>Un verdict</h3>
+          <p>Spam ou message normal. Avis positif ou négatif.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ======================= Spam ======================= -->
+  <section class="section" id="spam">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Spam&nbsp;: quel modèle choisir&nbsp;?</h2>
+        <p>Quatre modèles ont lu les mêmes SMS. Aucun n'est parfait&nbsp;: chacun place le curseur ailleurs entre bloquer un vrai message et laisser passer un spam.</p>
+      </div>
+
+      <div class="lab">
+        <div class="panel">
+          <div class="toolbar">
+            <div class="seg" role="group" aria-label="Type de graphique" id="spamView">
+              <button type="button" aria-pressed="true" data-view="bars">Scores</button>
+              <button type="button" aria-pressed="false" data-view="scatter">Precision contre recall</button>
+            </div>
+            <div class="seg" role="group" aria-label="Mesure affichée" id="spamMetrics"></div>
+          </div>
+          <p class="metric-help" id="spamHelp"></p>
+          <div class="chart-box" id="spamBarsBox"><canvas id="spamBars" role="img" aria-label="Scores des quatre modèles de détection de spam. Les mêmes valeurs sont dans le tableau plus bas."></canvas></div>
+          <div class="chart-box" id="spamScatterBox" hidden><canvas id="spamScatter" role="img" aria-label="Precision et recall des quatre modèles. Les mêmes valeurs sont dans le tableau plus bas."></canvas></div>
+        </div>
+
+        <div class="panel">
+          <h3 class="panel-title">Regarder un modèle de près</h3>
+          <div class="picker" id="spamPicker"></div>
+          <div class="detail" id="spamDetail"></div>
+        </div>
+      </div>
+
+      <div class="table-wrap"><table id="spamTable"></table></div>
+
+      <!-- Jeu -->
+      <div class="game" id="game" aria-labelledby="gameTitle">
+        <div class="game-head">
+          <h3 id="gameTitle">Toi contre le modèle</h3>
+          <span class="game-count" id="gameCount"></span>
+        </div>
+        <p class="game-sub">Ce SMS est-il un spam&nbsp;?</p>
+        <blockquote class="msg" id="gameMsg"></blockquote>
+        <div class="guess-row" id="guessRow">
+          <button class="btn is-spam" type="button" data-guess="spam">C'est un spam</button>
+          <button class="btn is-ham" type="button" data-guess="ham">Message normal</button>
+        </div>
+        <div class="reveal" id="reveal" role="status" aria-live="polite" hidden></div>
+        <p class="game-foot" id="gameFoot">Ces cinq messages viennent du jeu de test&nbsp;: trois que le SVM classe bien, deux qu'il rate.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= IMDb ======================= -->
+  <section class="section" id="imdb">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Avis de films&nbsp;: l'effet de chaque réglage</h2>
+        <p>Un réseau de neurones classe des critiques d'IMDb en positives ou négatives. À chaque étape, un réglage change et on mesure l'effet.</p>
+      </div>
+
+      <div class="lab">
+        <div class="panel">
+          <div class="toolbar">
+            <h3 class="panel-title">Quatre expériences</h3>
+            <div class="seg" role="group" aria-label="Mesure affichée" id="imdbMetrics"></div>
+          </div>
+          <p class="metric-help" id="imdbHelp"></p>
+          <div class="chart-box"><canvas id="imdbBars" role="img" aria-label="Scores des quatre expériences sur IMDb. Les mêmes valeurs sont dans le tableau plus bas."></canvas></div>
+        </div>
+        <div class="panel">
+          <h3 class="panel-title">Regarder une expérience de près</h3>
+          <div class="picker" id="imdbPicker"></div>
+          <div class="detail" id="imdbDetail"></div>
+        </div>
+      </div>
+
+      <ol class="ladder" id="imdbLadder" aria-label="Variation du F1 à chaque étape"></ol>
+
+      <div class="table-wrap"><table id="imdbTable"></table></div>
+
+      <div class="panel net">
+        <h3 class="panel-title">Le réseau utilisé</h3>
+        <p class="net-sub">Un MLP à quatre couches. Le texte arrive sous forme de 10&nbsp;000 poids TF-IDF et le réseau rend un seul nombre&nbsp;: au-dessus de 0,5, l'avis est positif.</p>
+        <div id="netSvg"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= Limites ======================= -->
+  <section class="section" id="limites">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Ce que ces résultats ne disent pas</h2>
+        <p>Les chiffres plus haut sont justes, mais ils ont un cadre. Le voici.</p>
+      </div>
+      <ul class="limits">
+        <li>
+          <h3>Un seul entraînement par expérience</h3>
+          <p>Les quatre essais sur IMDb ont été lancés une fois chacun. Un écart de un ou deux points peut venir du hasard de l'initialisation.</p>
+        </li>
+        <li>
+          <h3>Un échantillon d'IMDb, pas le jeu entier</h3>
+          <p>Le réseau a appris sur 4&nbsp;000 critiques et a été testé sur 1&nbsp;000, choisies au hasard dans les 50&nbsp;000 du jeu complet.</p>
+        </li>
+        <li>
+          <h3>La loss pondérée n'a rien à corriger ici</h3>
+          <p>Les classes d'IMDb sont équilibrées, 2&nbsp;000 contre 2&nbsp;000. Le poids calculé vaut donc 1 et la loss pondérée revient à la loss simple. Elle servirait sur des données déséquilibrées, comme les SMS.</p>
+        </li>
+        <li>
+          <h3>Le modèle de la démo ne connaît que l'anglais</h3>
+          <p>Il a appris sur des SMS anglais de 2012. Un message en français, ou une arnaque écrite autrement, le prendront en défaut.</p>
+        </li>
+        <li>
+          <h3>Un sac de mots, sans l'ordre</h3>
+          <p>TF-IDF compte les mots mais ignore leur enchaînement. « pas du tout bon » et « pas du tout mauvais » lui ressemblent beaucoup.</p>
+        </li>
+        <li>
+          <h3>Ce qui reste à faire</h3>
+          <p>L'apprentissage semi-supervisé sur IMDb et la comparaison finale des modèles. Ces deux parties arrivent.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <span>Projet de Master BDIA · Python, scikit-learn, PyTorch · Page sans dépendance externe</span>
+    <a href="https://github.com/youssef-el-aidoudi/Text-Classification-Lab">Code source sur GitHub</a>
+  </div>
+</footer>
+
+<noscript><p class="wrap" style="padding:24px 0">La démo et les graphiques ont besoin de JavaScript. Tous les résultats chiffrés sont aussi dans le README du dépôt GitHub.</p></noscript>
+
+<script src="vendor/chart.umd.js"></script>
+<script src="js/data.js"></script>
+<script src="js/classifier.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

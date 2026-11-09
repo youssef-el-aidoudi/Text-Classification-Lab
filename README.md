@@ -1,23 +1,31 @@
 # Text-Classification-Lab
 
-Ce TP compare plusieurs méthodes d'IA pour classer des textes, sur deux cas :
+**Du texte brut à une décision : spam ou pas spam, avis positif ou négatif.**
 
-1. **Détection de spam** (SMS) avec des modèles classiques de scikit-learn.
+[![Voir la démo et les résultats](https://img.shields.io/badge/%F0%9F%93%8A_D%C3%A9mo_et_r%C3%A9sultats-en_ligne-1d4ed8?style=for-the-badge)](https://youssef-el-aidoudi.github.io/Text-Classification-Lab/)
+
+Ce projet (TP de Master BDIA) compare plusieurs méthodes d'IA pour classer des textes, sur deux cas :
+
+1. **Détection de spam** (SMS) avec quatre modèles classiques de scikit-learn.
 2. **Analyse de sentiment** (critiques de films IMDb) avec un réseau de neurones MLP écrit en PyTorch.
 
-Dans les deux cas, le texte est transformé en nombres avec **TF-IDF**, puis les modèles sont comparés avec les mêmes métriques : accuracy, precision, recall et F1-score.
+Dans les deux cas, le texte est transformé en nombres avec **TF-IDF**, puis les modèles sont comparés avec les mêmes mesures : accuracy, precision, recall et F1-score.
+
+La page en ligne va plus loin que les tableaux : le modèle de détection de spam **tourne directement dans le navigateur**. On écrit un SMS, il répond, et il montre quels mots ont fait pencher la décision.
 
 ## Contenu du projet
 
 | Fichier | Rôle |
 |---|---|
-| `train_spam_models.py` | Entraîne et compare 4 modèles de détection de spam, sauvegarde les modèles et les résultats |
+| `train_spam_models.py` | Entraîne et compare les 4 modèles de détection de spam, sauvegarde les modèles et les résultats |
 | `test_spam.py` | Vérifie rapidement que le jeu de données se charge bien |
 | `partie1_mlp_imdb.py` | MLP PyTorch sur IMDb, avec 4 expériences |
+| `export_model_for_web.py` | Exporte le modèle de spam (vocabulaire, IDF, coefficients) vers `docs/model/spam_model.json` pour la démo |
 | `partie2_semi_supervise_imdb.py` | Apprentissage semi-supervisé sur IMDb *(à venir)* |
 | `partie3_comparaison_modeles.py` | Comparaison finale des modèles *(à venir)* |
-| `data/spam.csv` | Jeu de données SMS (colonnes : label, texte, séparées par une tabulation) |
+| `data/spam.csv` | Jeu de données SMS (label et texte, séparés par une tabulation) |
 | `results/` | Tableaux de résultats en CSV |
+| `docs/` | Page web des résultats (HTML, CSS, JavaScript, Chart.js), publiée avec GitHub Pages |
 
 ## Installation
 
@@ -32,52 +40,79 @@ pip install -r requirements.txt
 ```bash
 python train_spam_models.py      # partie spam
 python partie1_mlp_imdb.py       # partie IMDb (télécharge IMDb via HuggingFace)
+python export_model_for_web.py   # régénère le modèle de la démo web
 ```
 
-Les modèles entraînés sont enregistrés dans `models/` (non inclus dans le dépôt : il suffit de relancer le script pour les recréer). Les résultats sont écrits dans `results/`.
+Les modèles entraînés sont enregistrés dans `models/` (exclus du dépôt : il suffit de relancer le script pour les recréer). Les résultats sont écrits dans `results/`.
 
 ## Partie spam : détection de SMS indésirables
 
-- Données séparées en 80 % entraînement et 20 % test (`stratify`, pour garder la même proportion de spam et de ham).
-- Vectorisation TF-IDF : 5000 mots maximum, sans les mots vides anglais.
-- Quatre modèles comparés. Les métriques precision, recall et F1 sont calculées sur la classe **spam**.
+- 5 572 SMS, séparés en 80 % entraînement (4 457) et 20 % test (1 115), avec `stratify` pour garder la même proportion de spam dans les deux parties.
+- Vectorisation TF-IDF : 5 000 mots au maximum, sans les mots vides anglais.
+- Quatre modèles comparés. Precision, recall et F1 portent sur la classe **spam**.
 
 | Modèle | Accuracy | Precision | Recall | F1 |
 |---|---|---|---|---|
-| Naive Bayes | 0.972 | 1.000 | 0.792 | 0.884 |
-| Régression logistique | 0.977 | 0.913 | 0.913 | 0.913 |
-| **SVM linéaire** | **0.981** | 0.957 | 0.899 | **0.927** |
-| Random Forest | 0.976 | 1.000 | 0.819 | 0.900 |
+| Naive Bayes | 97,2 % | 100,0 % | 79,2 % | 88,4 % |
+| Régression logistique | 97,7 % | 91,3 % | 91,3 % | 91,3 % |
+| **SVM linéaire** | **98,1 %** | 95,7 % | 90,0 % | **92,7 %** |
+| Random Forest | 97,6 % | 100,0 % | 81,9 % | 90,0 % |
+
+### Ce que ça donne en nombre de messages
+
+Le jeu de test contient 1 115 SMS : 966 messages normaux et 149 spams.
+
+| Modèle | Vrais messages bloqués à tort | Spams non détectés |
+|---|---|---|
+| Naive Bayes | 0 | 31 |
+| Régression logistique | 13 | 13 |
+| SVM linéaire | 6 | 15 |
+| Random Forest | 0 | 27 |
 
 **Lecture des résultats**
 
-- Le **SVM linéaire** donne le meilleur F1 (0,927) et la meilleure accuracy.
-- **Naive Bayes** et **Random Forest** ont une precision de 100 % : ils ne classent jamais un vrai message comme spam. Mais ils laissent passer beaucoup de spams (recall de 79 % et 82 %).
-- La **régression logistique** est la plus équilibrée entre precision et recall.
-- Le choix dépend du besoin : si on veut éviter à tout prix de bloquer un vrai message, on préfère une precision élevée. Si on veut attraper le plus de spams possible, on regarde le recall.
+- Le **SVM linéaire** donne le meilleur F1 et la meilleure accuracy : il bloque 134 spams sur 149 en ne se trompant que 6 fois sur les messages normaux.
+- **Naive Bayes** et **Random Forest** ne bloquent jamais un vrai message, mais ils laissent passer beaucoup plus de spams (31 et 27).
+- La **régression logistique** est la plus équilibrée : autant de fausses alertes que de spams ratés.
+- Le choix dépend donc de l'usage. Si bloquer un vrai message coûte très cher, la precision prime. Si l'important est d'attraper le plus de spams, c'est le recall.
 
-Le script sauvegarde aussi 3 exemples bien classés et 2 mal classés (`results/exemples_spam_bien_mal_classes.csv`). Par exemple, un spam de type « voucher holder… call… » n'est pas détecté, alors qu'un message normal très court (« Alright i have a new goal now ») est pris à tort pour du spam.
+Le script sauvegarde aussi des exemples bien et mal classés (`results/exemples_spam_bien_mal_classes.csv`). Un spam du type « voucher holder… call… » passe à travers, alors qu'un message normal très court (« Alright i have a new goal now ») est pris pour du spam.
 
-## Partie 1 : MLP sur IMDb (sentiment positif / négatif)
+## La démo web
 
-- Données : sous-échantillon équilibré de IMDb : 4000 critiques pour l'entraînement (2000 négatives, 2000 positives) et 1000 pour le test.
+`export_model_for_web.py` réentraîne la régression logistique et écrit son vocabulaire, ses valeurs IDF et ses coefficients dans un fichier JSON. La page refait ensuite le même calcul en JavaScript : passage en minuscules, découpage en mots, TF-IDF, normalisation L2, produit scalaire, sigmoïde.
+
+Le portage a été vérifié sur les 1 115 SMS du jeu de test : **le navigateur et scikit-learn rendent le même verdict dans 100 % des cas**, avec un écart de probabilité d'au plus 6 × 10⁻⁷ dû à l'arrondi des coefficients.
+
+La régression logistique a été retenue plutôt que le SVM parce qu'elle donne une probabilité, ce qui permet d'afficher un niveau de confiance et le poids de chaque mot dans la décision.
+
+## Partie 1 : MLP sur IMDb (sentiment positif ou négatif)
+
+- Sous-échantillon équilibré d'IMDb : 4 000 critiques pour l'entraînement (2 000 négatives, 2 000 positives) et 1 000 pour le test.
 - Vectorisation TF-IDF avec 10 000 variables.
 - Réseau MLP : 10 000 → 256 → 128 → 64 → 1, avec BatchNorm sur la première couche et Dropout (0,3) en option.
-- Optimiseur Adam, loss `BCEWithLogitsLoss`, graine fixée (`SEED = 42`) pour pouvoir refaire les résultats.
+- Optimiseur Adam, loss `BCEWithLogitsLoss`, graine fixée (`SEED = 42`).
 
 | Expérience | Batch | Epochs | LR | Dropout | Loss pondérée | Accuracy | Precision | Recall | F1 |
 |---|---|---|---|---|---|---|---|---|---|
-| MLP de base | 64 | 3 | 0.001 | non | non | 0.825 | 0.852 | 0.786 | 0.818 |
-| **Hyperparamètres adaptés** | 32 | 4 | 0.0005 | non | non | **0.846** | 0.853 | 0.836 | **0.844** |
-| Avec dropout | 32 | 4 | 0.0005 | oui | non | 0.829 | 0.839 | 0.814 | 0.826 |
-| Loss pondérée | 32 | 4 | 0.0005 | oui | oui | 0.839 | 0.847 | 0.828 | 0.837 |
+| MLP de base | 64 | 3 | 0,001 | non | non | 82,5 % | 85,2 % | 78,6 % | 81,8 % |
+| **Hyperparamètres adaptés** | 32 | 4 | 0,0005 | non | non | **84,6 %** | 85,3 % | 83,6 % | **84,4 %** |
+| Avec dropout | 32 | 4 | 0,0005 | oui | non | 82,9 % | 83,9 % | 81,4 % | 82,6 % |
+| Loss pondérée | 32 | 4 | 0,0005 | oui | oui | 83,9 % | 84,7 % | 82,8 % | 83,7 % |
 
 **Lecture des résultats**
 
-- Le meilleur résultat vient du réglage des hyperparamètres (batch plus petit, learning rate plus faible, un epoch de plus) : F1 de 0,844 contre 0,818 pour le modèle de base.
+- Le meilleur résultat vient du réglage des hyperparamètres (batch plus petit, learning rate plus faible, un epoch de plus) : F1 de 84,4 % contre 81,8 % pour le modèle de base.
 - Le dropout n'améliore pas le score ici. Avec seulement 4 epochs et peu de données, le modèle ne sur-apprend pas encore beaucoup.
-- Les classes sont parfaitement équilibrées (2000 / 2000), donc le poids de la loss pondérée vaut 1 : elle est identique à la loss simple. La différence entre les deux dernières lignes vient surtout du hasard de l'entraînement, pas d'un vrai effet de la pondération. Cette option servirait surtout sur des données déséquilibrées, comme dans le cas du spam.
-- Les scores sont calculés sur un seul entraînement par expérience : de petits écarts (1 à 2 points) ne sont pas forcément significatifs.
+- Les classes sont parfaitement équilibrées (2 000 / 2 000), donc le poids calculé pour la loss pondérée vaut 1 : elle revient à la loss simple. L'écart entre les deux dernières lignes vient du hasard de l'entraînement, pas de la pondération. Cette option servirait sur des données déséquilibrées, comme les SMS.
+- Chaque expérience n'a été lancée qu'une fois : un écart de 1 à 2 points n'est pas forcément significatif.
+
+## Limites connues
+
+- Un seul entraînement par expérience sur IMDb, donc pas de mesure de la variabilité.
+- Le réseau a appris sur 4 000 critiques seulement, et non sur les 50 000 du jeu complet.
+- Le modèle de la démo ne connaît que l'anglais, et seulement le vocabulaire de SMS de 2012.
+- TF-IDF compte les mots mais ignore leur ordre : « pas du tout bon » et « pas du tout mauvais » se ressemblent beaucoup pour lui.
 
 ## Suite du travail
 
@@ -86,4 +121,4 @@ Le script sauvegarde aussi 3 exemples bien classés et 2 mal classés (`results/
 
 ## Technologies
 
-Python, PyTorch, scikit-learn, pandas, NumPy, HuggingFace `datasets`, joblib.
+Python, PyTorch, scikit-learn, pandas, NumPy, HuggingFace `datasets`, joblib. Page web en HTML, CSS et JavaScript, avec Chart.js — sans aucune dépendance chargée depuis un service externe.
