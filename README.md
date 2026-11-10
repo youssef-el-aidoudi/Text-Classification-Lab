@@ -122,3 +122,13 @@ La régression logistique a été retenue plutôt que le SVM parce qu'elle donne
 ## Technologies
 
 Python, PyTorch, scikit-learn, pandas, NumPy, HuggingFace `datasets`, joblib. Page web en HTML, CSS et JavaScript, avec Chart.js — sans aucune dépendance chargée depuis un service externe.
+
+---
+
+## Auteur
+
+**Youssef EL AIDOUDI** — M2 Bases de Données et Intelligence Artificielle (BDIA), Université Bourgogne Europe, Dijon.
+
+À la recherche d'un stage de fin d'études de 4 à 6 mois en data (analyse, ingénierie ou BI), disponible à partir d'avril 2027.
+
+[GitHub](https://github.com/youssef-el-aidoudi) · [LinkedIn](https://www.linkedin.com/in/youssef-el-aidoudi) · [youssefelaidoudi20@gmail.com](mailto:youssefelaidoudi20@gmail.com)
